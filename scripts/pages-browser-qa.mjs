@@ -19,7 +19,11 @@ const page = await desktop.newPage();
 page.on("console", (message) => { if (message.type() === "error") evidence.consoleErrors.push(message.text()); });
 page.on("pageerror", (error) => evidence.consoleErrors.push(error.message));
 
-const homeResponse = await page.goto(`${base}/index.html`, { waitUntil: "networkidle" });
+const homeResponse = await page.goto(`${base}/index.html`, { waitUntil: "domcontentloaded" });
+await page.waitForFunction(() => {
+  const image = document.querySelector(".signal-image img");
+  return image?.complete && image.naturalWidth > 0;
+});
 evidence.desktop.home = {
   status: homeResponse.status(),
   title: await page.locator("h1").textContent(),
@@ -34,7 +38,7 @@ assert(evidence.desktop.home.stylesheetLoaded, "Pages 子路径样式未加载")
 assert(evidence.desktop.home.prefixedLinks > 0, "Pages 页面链接没有子路径前缀");
 assert(evidence.desktop.home.noOverflow, "Pages 桌面首页横向溢出");
 
-const referenceResponse = await page.goto(`${base}/pages/reference.html`, { waitUntil: "networkidle" });
+const referenceResponse = await page.goto(`${base}/pages/reference.html`, { waitUntil: "domcontentloaded" });
 evidence.desktop.reference = {
   status: referenceResponse.status(),
   cards: await page.locator(".content-card").count(),
@@ -63,7 +67,7 @@ assert(evidence.desktop.operatorPage.title === "measure_pos 算子参考", "Page
 assert(evidence.desktop.operatorPage.directoryLinks === 48 && evidence.desktop.operatorPage.current === 1, "Pages 算子目录回归");
 await page.screenshot({ path: path.join(output, "operator-desktop.png"), fullPage: false });
 
-await page.goto(`${base}/search.html?q=measure_pos`, { waitUntil: "networkidle" });
+await page.goto(`${base}/search.html?q=measure_pos`, { waitUntil: "domcontentloaded" });
 await page.waitForFunction(() => document.querySelectorAll("[data-search-results] article").length > 0);
 evidence.desktop.search = {
   results: await page.locator("[data-search-results] article").count(),
@@ -74,7 +78,7 @@ assert(evidence.desktop.search.results > 0 && evidence.desktop.search.prefixedRe
 const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const mobilePage = await mobile.newPage();
 mobilePage.on("console", (message) => { if (message.type() === "error") evidence.consoleErrors.push(`mobile: ${message.text()}`); });
-await mobilePage.goto(`${base}/articles/halcon-common-operator-guide.html`, { waitUntil: "networkidle" });
+await mobilePage.goto(`${base}/articles/halcon-common-operator-guide.html`, { waitUntil: "domcontentloaded" });
 evidence.mobile = {
   searchVisible: await mobilePage.locator("[data-operator-search]").isVisible(),
   noOverflow: await mobilePage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
