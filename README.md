@@ -15,9 +15,9 @@ pnpm serve
 
 ## GitHub Pages
 
-推送到 `main` 分支后，`.github/workflows/pages.yml` 会自动构建并发布站点。项目仓库为 `hufery/Aff_Word` 时，网站地址是：
+推送到 `main` 分支后，`.github/workflows/pages.yml` 会自动构建并发布站点。项目仓库为 `huferyliu/Aff_Word` 时，网站地址是：
 
-`https://hufery.github.io/Aff_Word/`
+`https://huferyliu.github.io/Aff_Word/`
 
 本地预览 GitHub Pages 子路径：
 
