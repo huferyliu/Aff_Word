@@ -71,9 +71,24 @@ await page.waitForURL("**/articles/codex-app-learning-manual.html");
 evidence.desktop.codexLearning.title = await page.locator("h1").textContent();
 evidence.desktop.codexLearning.sourceLink = await page.locator('a[href*="BV1BVEs6LENZ"]').getAttribute("href");
 evidence.desktop.codexLearning.sections = await page.locator(".article-content h2").allTextContents();
+evidence.desktop.codexLearning.toc = await page.locator(".article-toc").evaluate((element) => ({
+  clientHeight: element.clientHeight,
+  scrollHeight: element.scrollHeight,
+  overflowY: getComputedStyle(element).overflowY
+}));
+await page.locator(".article-toc").hover();
+const pageScrollBeforeToc = await page.evaluate(() => window.scrollY);
+await page.mouse.wheel(0, 600);
+await page.waitForTimeout(100);
+evidence.desktop.codexLearning.toc.scrollTop = await page.locator(".article-toc").evaluate((element) => element.scrollTop);
+evidence.desktop.codexLearning.toc.pageScrollAfter = await page.evaluate(() => window.scrollY);
 assert(evidence.desktop.codexLearning.title === "Codex App 从入门到进阶学习手册", "Codex 手册标题不正确");
 assert(evidence.desktop.codexLearning.sourceLink.includes("BV1BVEs6LENZ"), "Codex 视频来源链接缺失");
 assert(["八 记忆系统与 AGENTS.md", "十 Skills", "十一 MCP"].every((section) => evidence.desktop.codexLearning.sections.includes(section)), "Codex 手册关键章节不完整");
+assert(evidence.desktop.codexLearning.toc.scrollHeight > evidence.desktop.codexLearning.toc.clientHeight, "Codex 长目录没有形成可滚动区域");
+assert(evidence.desktop.codexLearning.toc.overflowY === "auto", "Codex 长目录没有启用纵向滚动");
+assert(evidence.desktop.codexLearning.toc.scrollTop > 0, "鼠标滚轮不能滚动 Codex 目录");
+assert(evidence.desktop.codexLearning.toc.pageScrollAfter === pageScrollBeforeToc, "滚动 Codex 目录时正文发生移动");
 await page.goto(`${base}/pages/halcon.html`, { waitUntil: "networkidle" });
 await page.screenshot({ path: path.join(output, "halcon-routes-desktop.png"), fullPage: true });
 evidence.desktop.halconRoutes = {
@@ -139,7 +154,8 @@ evidence.desktop.operatorGuide = {
   tocOperatorLinks: await page.locator("[data-operator-toc]").count(),
   searchLinks: await page.locator("[data-operator-name]").count(),
   tables: await page.locator(".article-content table").count(),
-  noHorizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+  noHorizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  toc: await page.locator(".article-toc").evaluate((element) => ({ clientHeight: element.clientHeight, scrollHeight: element.scrollHeight, overflowY: getComputedStyle(element).overflowY }))
 };
 assert(operatorGuideResponse.ok(), "HALCON 算子手册无法访问");
 assert(evidence.desktop.operatorGuide.title.includes("常用算子介绍与选型手册"), "HALCON 算子手册标题不正确");
@@ -151,6 +167,7 @@ assert(evidence.desktop.operatorGuide.tocOperatorLinks === 48, "HALCON 算子目
 assert(evidence.desktop.operatorGuide.searchLinks === 48, "HALCON 算子搜索列表数量不正确");
 assert(evidence.desktop.operatorGuide.tables >= 1, "HALCON 算子手册缺少参数选型速查表");
 assert(evidence.desktop.operatorGuide.noHorizontalOverflow, "HALCON 算子手册桌面端出现横向溢出");
+assert(evidence.desktop.operatorGuide.toc.scrollHeight > evidence.desktop.operatorGuide.toc.clientHeight && evidence.desktop.operatorGuide.toc.overflowY === "auto", "HALCON 长算子目录不能独立滚动");
 await page.screenshot({ path: path.join(output, "operator-guide-desktop.png"), fullPage: true });
 await page.screenshot({ path: path.join(output, "operator-guide-search-desktop.png"), fullPage: false });
 
@@ -221,9 +238,11 @@ await page.goto(`${base}/articles/halcon-threshold.html`, { waitUntil: "networki
 evidence.desktop.articleColumns = await page.locator(".article-layout").evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length);
 evidence.desktop.codeLines = await page.locator(".code-line").count();
 evidence.desktop.articleNoOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+evidence.desktop.shortToc = await page.locator(".article-toc").evaluate((element) => ({ clientHeight: element.clientHeight, scrollHeight: element.scrollHeight, overflowY: getComputedStyle(element).overflowY }));
 assert(evidence.desktop.articleColumns === 3, "桌面教程不是三栏布局");
 assert(evidence.desktop.codeLines >= 5, "代码行号结构未生成");
 assert(evidence.desktop.articleNoOverflow, "桌面文章出现横向溢出");
+assert(evidence.desktop.shortToc.scrollHeight <= evidence.desktop.shortToc.clientHeight && evidence.desktop.shortToc.overflowY === "auto", "短目录被错误限制或未继承通用滚动规则");
 await page.locator("[data-copy-code]").first().click();
 evidence.desktop.copiedCode = await page.evaluate(() => navigator.clipboard.readText());
 assert(evidence.desktop.copiedCode.includes("threshold"), "代码复制内容不正确");

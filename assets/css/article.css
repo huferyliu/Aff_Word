@@ -3,6 +3,7 @@
 .breadcrumb > span:last-child { overflow: hidden; text-overflow: ellipsis; }
 .article-layout { padding-bottom: 80px; display: grid; grid-template-columns: 190px minmax(0, 720px) 210px; justify-content: space-between; gap: 30px; align-items: start; }
 .article-toc, .article-info { position: sticky; top: 92px; font-size: .82rem; }
+.article-toc { max-height: calc(100vh - 112px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .article-toc > strong, .article-info strong { display: block; margin-bottom: 10px; }
 .article-toc nav { display: grid; border-left: 1px solid var(--line); }
 .article-toc a { padding: 5px 0 5px 14px; color: var(--muted); }

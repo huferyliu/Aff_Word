@@ -49,6 +49,12 @@ await page.locator('.category-item[href$="/articles/codex-app-learning-manual.ht
 await page.waitForURL("**/Aff_Word/articles/codex-app-learning-manual.html");
 evidence.desktop.codexLearningTitle = await page.locator("h1").textContent();
 assert(evidence.desktop.codexLearningTitle === "Codex App 从入门到进阶学习手册", "Pages Codex 手册无法打开");
+evidence.desktop.codexToc = await page.locator(".article-toc").evaluate((element) => ({ clientHeight: element.clientHeight, scrollHeight: element.scrollHeight, overflowY: getComputedStyle(element).overflowY }));
+await page.locator(".article-toc").hover();
+await page.mouse.wheel(0, 600);
+await page.waitForTimeout(100);
+evidence.desktop.codexToc.scrollTop = await page.locator(".article-toc").evaluate((element) => element.scrollTop);
+assert(evidence.desktop.codexToc.scrollHeight > evidence.desktop.codexToc.clientHeight && evidence.desktop.codexToc.overflowY === "auto" && evidence.desktop.codexToc.scrollTop > 0, "Pages Codex 长目录不能独立滚动");
 
 const referenceResponse = await page.goto(`${base}/pages/reference.html`, { waitUntil: "domcontentloaded" });
 evidence.desktop.reference = {
