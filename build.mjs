@@ -173,6 +173,13 @@ function heroStat(value, label) {
   return `<div><strong>${value}</strong><span>${label}</span></div>`;
 }
 
+const learningTopics = [
+  ["HALCON / 机器视觉", "13 段路线", "从图像基础到 OCR 与综合案例", "/pages/halcon.html"],
+  ["Python", "基础入门", "变量、流程控制、函数与数据结构", "/search.html?q=Python"],
+  ["Codex", "实践工作流", "从基本使用到真实项目协作", "/articles/codex-app-learning-manual.html"],
+  ["AI", "概念与应用", "模型、提示词与工程落地", "/search.html?q=AI"]
+];
+
 const homeBody = `
 <section class="home-intro page-width">
   <div class="intro-copy">
@@ -193,12 +200,7 @@ const homeBody = `
 <section class="section page-width">
   <div class="section-heading"><div><p class="eyebrow">学习中心</p><h2>从路线进入，而不是迷失在文章流里</h2></div><a href="/pages/learn.html">查看全部路线</a></div>
   <div class="category-grid">
-    ${[
-      ["HALCON / 机器视觉", "13 段路线", "从图像基础到 OCR 与综合案例", "halcon"],
-      ["Python", "基础入门", "变量、流程控制、函数与数据结构", "python"],
-      ["Codex", "实践工作流", "从基本使用到真实项目协作", "codex"],
-      ["AI", "概念与应用", "模型、提示词与工程落地", "ai"]
-    ].map(([name, count, desc, key], i) => `<a class="category-item" href="/pages/learn.html#${key}"><span>0${i + 1}</span><div><h3>${name}</h3><p>${desc}</p></div><strong>${count}</strong></a>`).join("")}
+    ${learningTopics.map(([name, count, desc, href], i) => `<a class="category-item" href="${href}"><span>0${i + 1}</span><div><h3>${name}</h3><p>${desc}</p></div><strong>${count}</strong></a>`).join("")}
   </div>
 </section>
 <section class="section section-band">
@@ -230,8 +232,10 @@ const routeLinks = [
   "halcon-ocr",
   "halcon-project-workflow"
 ];
-const learnBody = `<div class="page-header page-width"><p class="eyebrow">学习中心</p><h1>按知识路径稳步推进</h1><p>课程按技术领域组织。HALCON 路线从视觉基础延伸到完整案例，其他主题持续补充。</p></div>
-<section class="page-width learn-layout" id="halcon"><div><div class="section-heading"><div><h2>HALCON / 机器视觉</h2><p>从基础概念到工业视觉应用</p></div><span class="status">13 个章节</span></div><ol class="route-list">${routes.map((name, i) => `<li><span>${String(i + 1).padStart(2, "0")}</span><div><strong>${name}</strong><small>${routeLinks[i] ? "已有内容" : "规划中"}</small></div>${routeLinks[i] ? `<a href="/articles/${routeLinks[i]}.html">开始学习</a>` : ""}</li>`).join("")}</ol></div><aside class="learn-aside"><h2>其他学习主题</h2>${[["python", "Python", "2 篇"], ["codex", "Codex", "1 篇", "/articles/codex-app-learning-manual.html"], ["ai", "AI", "1 篇"], ["opencv", "OpenCV", "规划中"]].map(([id, name, value, href]) => `${href ? `<a href="${href}">` : ""}<div id="${id}"><strong>${name}</strong><span>${value}</span></div>${href ? "</a>" : ""}`).join("")}</aside></section>`;
+const learnBody = `<div class="page-header page-width"><p class="eyebrow">学习中心</p><h1>选择一个学习主题</h1><p>按技术领域进入对应路线或手册，不把不同主题混在同一个页面。</p></div>
+<section class="section page-width"><div class="category-grid">${learningTopics.map(([name, count, desc, href], i) => `<a class="category-item" href="${href}"><span>0${i + 1}</span><div><h3>${name}</h3><p>${desc}</p></div><strong>${count}</strong></a>`).join("")}</div></section>`;
+const halconBody = `<div class="page-header page-width"><p class="eyebrow">HALCON / 机器视觉</p><h1>按知识路径稳步推进</h1><p>从视觉基础延伸到完整工业案例。</p></div>
+<section class="page-width learn-layout"><div><div class="section-heading"><div><h2>HALCON / 机器视觉</h2><p>从基础概念到工业视觉应用</p></div><span class="status">13 个章节</span></div><ol class="route-list">${routes.map((name, i) => `<li><span>${String(i + 1).padStart(2, "0")}</span><div><strong>${name}</strong><small>${routeLinks[i] ? "已有内容" : "规划中"}</small></div>${routeLinks[i] ? `<a href="/articles/${routeLinks[i]}.html">开始学习</a>` : ""}</li>`).join("")}</ol></div><aside class="learn-aside"><h2>其他学习主题</h2><a href="/articles/codex-app-learning-manual.html"><div><strong>Codex</strong><span>1 篇</span></div></a><a href="/pages/learn.html"><div><strong>全部主题</strong><span>返回</span></div></a></aside></section>`;
 
 function listingPage(type, title, intro, active) {
   const items = articles.filter((article) => article.type === type && article.listed !== false);
@@ -240,6 +244,7 @@ function listingPage(type, title, intro, active) {
 
 fs.mkdirSync(path.join(out, "pages"), { recursive: true });
 fs.writeFileSync(path.join(out, "pages", "learn.html"), shell({ title: "学习", description: "HALCON、Python、AI 与 Codex 学习路线", active: "learn", body: learnBody }));
+fs.writeFileSync(path.join(out, "pages", "halcon.html"), shell({ title: "HALCON 学习路线", description: "HALCON 与机器视觉学习路线", active: "learn", body: halconBody }));
 fs.writeFileSync(path.join(out, "pages", "notes.html"), listingPage("note", "我的笔记", "把个人理解、参数经验和踩坑记录留下来", "notes"));
 fs.writeFileSync(path.join(out, "pages", "experiments.html"), listingPage("experiment", "实验中心", "记录真实操作过程和每一次关键尝试", "experiments"));
 fs.writeFileSync(path.join(out, "pages", "projects.html"), listingPage("project", "项目中心", "把分散实验组织成可复用的完整系统", "projects"));

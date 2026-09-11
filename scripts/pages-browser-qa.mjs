@@ -37,11 +37,15 @@ assert(evidence.desktop.home.imageLoaded, "Pages 子路径首页图片未加载"
 assert(evidence.desktop.home.stylesheetLoaded, "Pages 子路径样式未加载");
 assert(evidence.desktop.home.prefixedLinks > 0, "Pages 页面链接没有子路径前缀");
 assert(evidence.desktop.home.noOverflow, "Pages 桌面首页横向溢出");
+evidence.desktop.homeCodexHref = await page.locator('.category-item[href$="/articles/codex-app-learning-manual.html"]').getAttribute("href");
+assert(evidence.desktop.homeCodexHref === "/Aff_Word/articles/codex-app-learning-manual.html", "Pages 首页 Codex 仍指向学习页");
 
-await page.goto(`${base}/pages/learn.html`, { waitUntil: "domcontentloaded" });
-evidence.desktop.codexLearningHref = await page.locator('.learn-aside a[href$="/articles/codex-app-learning-manual.html"]').getAttribute("href");
+await page.locator('[data-site-nav] a[href$="/pages/learn.html"]').click();
+await page.waitForURL("**/Aff_Word/pages/learn.html");
+assert(await page.locator("h1").textContent() === "选择一个学习主题", "Pages 学习导航仍打开 HALCON 页面");
+evidence.desktop.codexLearningHref = await page.locator('.category-item[href$="/articles/codex-app-learning-manual.html"]').getAttribute("href");
 assert(evidence.desktop.codexLearningHref === "/Aff_Word/articles/codex-app-learning-manual.html", "Pages Codex 手册链接缺少子路径");
-await page.locator('.learn-aside a[href$="/articles/codex-app-learning-manual.html"]').click();
+await page.locator('.category-item[href$="/articles/codex-app-learning-manual.html"]').click();
 await page.waitForURL("**/Aff_Word/articles/codex-app-learning-manual.html");
 evidence.desktop.codexLearningTitle = await page.locator("h1").textContent();
 assert(evidence.desktop.codexLearningTitle === "Codex App 从入门到进阶学习手册", "Pages Codex 手册无法打开");

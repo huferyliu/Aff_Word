@@ -34,7 +34,8 @@ assert(evidence.desktop.noHorizontalOverflow, "桌面首页出现横向溢出");
 await page.screenshot({ path: path.join(output, "home-desktop.png"), fullPage: true });
 
 const requiredPages = [
-  ["/pages/learn.html", "按知识路径"],
+  ["/pages/learn.html", "选择一个学习主题"],
+  ["/pages/halcon.html", "按知识路径"],
   ["/pages/notes.html", "把个人理解"],
   ["/pages/experiments.html", "记录真实操作"],
   ["/pages/projects.html", "把分散实验"],
@@ -48,10 +49,22 @@ for (const [url, expected] of requiredPages) {
   assert(response.ok() && heading.includes(expected), `${url} 无法正常访问`);
 }
 
-await page.goto(`${base}/pages/learn.html`, { waitUntil: "networkidle" });
-const routeLinks = await page.locator(".route-list a").evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+await page.goto(`${base}/index.html`, { waitUntil: "networkidle" });
+const homeCodexLink = page.locator('.category-item[href="/articles/codex-app-learning-manual.html"]');
+assert(await homeCodexLink.count() === 1, "首页 Codex 没有直接链接到手册");
+await homeCodexLink.click();
+await page.waitForURL("**/articles/codex-app-learning-manual.html");
+assert(await page.locator("h1").textContent() === "Codex App 从入门到进阶学习手册", "首页 Codex 打开了错误页面");
+
+await page.goto(`${base}/index.html`, { waitUntil: "networkidle" });
+await page.locator('[data-site-nav] a[href="/pages/learn.html"]').click();
+await page.waitForURL("**/pages/learn.html");
+assert(await page.locator("h1").textContent() === "选择一个学习主题", "顶部学习导航仍打开 HALCON 页面");
 const codexLearningLink = page.locator('.learn-aside a[href="/articles/codex-app-learning-manual.html"]');
-evidence.desktop.codexLearning = { href: await codexLearningLink.getAttribute("href") };
+evidence.desktop.codexLearning = { href: await page.locator('.category-item[href="/articles/codex-app-learning-manual.html"]').getAttribute("href") };
+await page.locator('.category-item[href="/pages/halcon.html"]').click();
+await page.waitForURL("**/pages/halcon.html");
+const halconRouteLinks = await page.locator(".route-list a").evaluateAll((links) => links.map((link) => link.getAttribute("href")));
 assert(await codexLearningLink.count() === 1, "学习页缺少 Codex 手册入口");
 await codexLearningLink.click();
 await page.waitForURL("**/articles/codex-app-learning-manual.html");
@@ -61,18 +74,18 @@ evidence.desktop.codexLearning.sections = await page.locator(".article-content h
 assert(evidence.desktop.codexLearning.title === "Codex App 从入门到进阶学习手册", "Codex 手册标题不正确");
 assert(evidence.desktop.codexLearning.sourceLink.includes("BV1BVEs6LENZ"), "Codex 视频来源链接缺失");
 assert(["八 记忆系统与 AGENTS.md", "十 Skills", "十一 MCP"].every((section) => evidence.desktop.codexLearning.sections.includes(section)), "Codex 手册关键章节不完整");
-await page.goto(`${base}/pages/learn.html`, { waitUntil: "networkidle" });
+await page.goto(`${base}/pages/halcon.html`, { waitUntil: "networkidle" });
 await page.screenshot({ path: path.join(output, "halcon-routes-desktop.png"), fullPage: true });
 evidence.desktop.halconRoutes = {
   total: await page.locator(".route-list li").count(),
-  available: routeLinks.length,
+  available: halconRouteLinks.length,
   planned: await page.locator(".route-list small", { hasText: "规划中" }).count(),
   articles: []
 };
 assert(evidence.desktop.halconRoutes.total === 13, "HALCON 路线数量不是 13");
 assert(evidence.desktop.halconRoutes.available === 13, "HALCON 路线仍有缺失入口");
 assert(evidence.desktop.halconRoutes.planned === 0, "HALCON 路线仍显示规划中");
-for (const href of routeLinks) {
+for (const href of halconRouteLinks) {
   const response = await page.goto(`${base}${href}`, { waitUntil: "domcontentloaded" });
   const title = await page.locator("h1").textContent();
   const paragraphs = await page.locator(".article-content p").count();
@@ -88,9 +101,9 @@ for (const href of routeLinks) {
   }
 }
 const routeNavigationChecks = [
-  { href: routeLinks[0], previous: 0, nextHref: routeLinks[1] },
-  { href: routeLinks[9], previousHref: routeLinks[8], nextHref: routeLinks[10] },
-  { href: routeLinks[12], previousHref: routeLinks[11], next: 0 }
+  { href: halconRouteLinks[0], previous: 0, nextHref: halconRouteLinks[1] },
+  { href: halconRouteLinks[9], previousHref: halconRouteLinks[8], nextHref: halconRouteLinks[10] },
+  { href: halconRouteLinks[12], previousHref: halconRouteLinks[11], next: 0 }
 ];
 evidence.desktop.routeNavigation = [];
 for (const check of routeNavigationChecks) {
@@ -263,10 +276,12 @@ await mobilePage.screenshot({ path: path.join(output, "menu-mobile.png"), fullPa
 await mobilePage.locator('[data-site-nav] a[href="/pages/learn.html"]').click();
 await mobilePage.waitForURL("**/pages/learn.html");
 evidence.mobile.menuNavigationHeading = await mobilePage.locator("h1").textContent();
-assert(evidence.mobile.menuNavigationHeading.includes("按知识路径"), "手机菜单点击后未进入学习页");
+evidence.mobile.learnNoOverflow = await mobilePage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+assert(evidence.mobile.menuNavigationHeading.includes("选择一个学习主题"), "手机菜单点击后未进入学习主题总览");
+assert(evidence.mobile.learnNoOverflow, "手机学习主题总览出现横向溢出");
 
 evidence.mobile.halconRoutes = [];
-for (const href of routeLinks) {
+for (const href of halconRouteLinks) {
   const response = await mobilePage.goto(`${base}${href}`, { waitUntil: "domcontentloaded" });
   const noOverflow = await mobilePage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
   const columns = await mobilePage.locator(".article-layout").evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length);
