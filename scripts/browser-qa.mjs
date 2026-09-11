@@ -50,6 +50,18 @@ for (const [url, expected] of requiredPages) {
 
 await page.goto(`${base}/pages/learn.html`, { waitUntil: "networkidle" });
 const routeLinks = await page.locator(".route-list a").evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+const codexLearningLink = page.locator('.learn-aside a[href="/articles/codex-app-learning-manual.html"]');
+evidence.desktop.codexLearning = { href: await codexLearningLink.getAttribute("href") };
+assert(await codexLearningLink.count() === 1, "学习页缺少 Codex 手册入口");
+await codexLearningLink.click();
+await page.waitForURL("**/articles/codex-app-learning-manual.html");
+evidence.desktop.codexLearning.title = await page.locator("h1").textContent();
+evidence.desktop.codexLearning.sourceLink = await page.locator('a[href*="BV1BVEs6LENZ"]').getAttribute("href");
+evidence.desktop.codexLearning.sections = await page.locator(".article-content h2").allTextContents();
+assert(evidence.desktop.codexLearning.title === "Codex App 从入门到进阶学习手册", "Codex 手册标题不正确");
+assert(evidence.desktop.codexLearning.sourceLink.includes("BV1BVEs6LENZ"), "Codex 视频来源链接缺失");
+assert(["八 记忆系统与 AGENTS.md", "十 Skills", "十一 MCP"].every((section) => evidence.desktop.codexLearning.sections.includes(section)), "Codex 手册关键章节不完整");
+await page.goto(`${base}/pages/learn.html`, { waitUntil: "networkidle" });
 await page.screenshot({ path: path.join(output, "halcon-routes-desktop.png"), fullPage: true });
 evidence.desktop.halconRoutes = {
   total: await page.locator(".route-list li").count(),
